@@ -23,9 +23,18 @@
         stroke: #ccc;
     }
 
+    .day-empty {
+        //fill: #fdfdfd;
+        stroke: #eee;
+    }
+
+    .day:hover {
+        stroke: #000;
+    }
+
     .month {
         fill: none;
-        stroke: #000;
+        stroke: #bbb;
         stroke-width: 2px;
     }
 
@@ -59,6 +68,8 @@
                <option value="5">Anlage5</option>
        </select>
        <br/>
+            <div id="warnings">
+            </div>
             <div id="tempChart">
                 <svg></svg>
             </div>
@@ -71,6 +82,10 @@
        </div>
         <script type="text/javascript">
          var showday = function(dataset, day) {
+            $("#warnings").empty();
+             if (dataset == 1 || dataset == 2) {
+                 $("#warnings").append("<div class='alert alert-warning'>Der Verlauf des Energieverbrauches ist nicht ideal! Die Heizung wird sehr oft an und aus geschaltet.</div>");
+                 }
             nv.addGraph(function() {
                 var tempChart = nv.models.multiBarChart().showControls(false);
 
@@ -156,6 +171,10 @@
     };
         var show_all = function() {
            var dataset = $("#input").val();
+            $("#warnings").empty();
+             if (dataset == 1 || dataset == 2) {
+                 $("#warnings").append("<div class='alert alert-warning'>Der Verlauf des Energieverbrauches ist nicht ideal! Die Heizung wird sehr oft an und aus geschaltet.</div>");
+                 }
             nv.addGraph(function() {
                 var tempChart = nv.models.multiBarChart().showControls(false);
 
@@ -309,7 +328,7 @@
      var rect = svg.selectAll(".day")
                    .data(function(d) { return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1)); })
                    .enter().append("rect")
-                   .attr("class", "day")
+                   .attr("class", "day day-empty")
                    .attr("width", cellSize)
                    .attr("height", cellSize)
                    .attr("onclick",function(d) {return "showday("+dataset+",'"+format(d)+"')"})
