@@ -1,10 +1,20 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
-        <script type="text/javascript" src="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.js"></script>
-        <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.css"/>
+        <script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/novus/nvd3/v1.8.2/build/nv.d3.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/novus/nvd3/v1.8.2/build/nv.d3.css"/>
+       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     </head>
+    <style>
+     #tempChart svg {
+         height: 400px;
+     }
+     #energyChart svg {
+         height: 400px;
+     }
+
+    </style>
     <body>
         <div id="tempChart">
             <svg></svg>
@@ -14,7 +24,7 @@
         </div>
         <script type="text/javascript">
          nv.addGraph(function() {
-             var tempChart = nv.models.multiBarChart();
+             var tempChart = nv.models.multiBarChart().showControls(false);
 
              tempChart.xAxis
                   .tickFormat(d3.time.format("%Y-%m-%d"));
@@ -66,10 +76,16 @@
          });
 
          nv.addGraph(function() {
-             var energyChart = nv.models.stackedAreaChart();
+             var energyChart = nv.models.lineWithFocusChart();
 
              energyChart.xAxis
-                  .tickFormat(d3.time.format("%Y-%m-%d"));
+                        .tickFormat(function(d) {
+                          return d3.time.format("%Y-%m-%d")(new Date(d));
+                        });
+             energyChart.x2Axis
+                        .tickFormat(function(d) {
+                          return d3.time.format("%Y-%m-%d")(new Date(d));
+                        });
              energyChart.yAxis
                   .tickFormat(d3.format(',.1f'));
 
@@ -87,7 +103,7 @@
 
                  var data = [{
                     key: "energy",
-                      values: energy_consumption.map(function(d) {
+                    values: energy_consumption.map(function(d) {
                           return {
                               x: dateFormat.parse(d.key),
                               y: d.values
