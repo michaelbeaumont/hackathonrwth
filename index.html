@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.css"/>
+    </head>
+    <body>
+        <div id="tempChart">
+            <svg></svg>
+        </div>
+        <div id="energyChart">
+            <svg></svg>
+        </div>
+        <script type="text/javascript">
+         nv.addGraph(function() {
+             var tempChart = nv.models.multiBarChart();
+
+             tempChart.xAxis
+                  .tickFormat(d3.time.format("%Y-%m-%d"));
+             tempChart.yAxis
+                  .tickFormat(d3.format(',.1f'));
+
+             d3.csv("http://localhost:8000/Data_0.csv", function(rows) {
+                var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
+                var dateFormat = d3.time.format("%Y-%m-%d")
+                var outdoor_temp = d3.nest()
+                             .key(function(d) {
+                                var ts = dateTimeFormat.parse(d['timestamp']);
+                                return dateFormat(ts);
+                             })
+                             .rollup(function(d) {
+                                return d3.mean(d, function(g) {return g['outdoor_temperature_celsius']; });
+                             }).entries(rows);
+                var indoor_temp = d3.nest()
+                             .key(function(d) {
+                                var ts = dateTimeFormat.parse(d['timestamp']);
+                                return dateFormat(ts);
+                             })
+                             .rollup(function(d) {
+                                return d3.mean(d, function(g) {return g['indoor_target_temperature_celsius']; });
+                             }).entries(rows);
+
+                 var data = [{
+                    key: "outdoor",
+                    values: outdoor_temp.map(function(d) {
+                         return {
+                             x: dateFormat.parse(d.key),
+                             y: d.values
+                         }
+                     })
+                  }, {
+                    key: "indoor",
+                      values: indoor_temp.map(function(d) {
+                          return {
+                              x: dateFormat.parse(d.key),
+                              y: d.values
+                          }
+                      })
+                 }];
+
+                d3.select('#tempChart svg').datum(data).transition().duration(500).call(tempChart);
+             });
+             nv.utils.windowResize(tempChart.update);
+             return tempChart;
+         });
+
+         nv.addGraph(function() {
+             var energyChart = nv.models.stackedAreaChart();
+
+             energyChart.xAxis
+                  .tickFormat(d3.time.format("%Y-%m-%d"));
+             energyChart.yAxis
+                  .tickFormat(d3.format(',.1f'));
+
+             d3.csv("http://localhost:8000/Data_0.csv", function(rows) {
+                var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
+                var dateFormat = d3.time.format("%Y-%m-%d")
+                var energy_consumption = d3.nest()
+                             .key(function(d) {
+                                var ts = dateTimeFormat.parse(d['timestamp']);
+                                return dateFormat(ts);
+                             })
+                             .rollup(function(d) {
+                                return d3.sum(d, function(g) {return g['energy_consumption_kwh']; });
+                             }).entries(rows);
+
+                 var data = [{
+                    key: "energy",
+                      values: energy_consumption.map(function(d) {
+                          return {
+                              x: dateFormat.parse(d.key),
+                              y: d.values
+                          }
+                      })
+                 }];
+
+                 console.log(data);
+
+                d3.select('#energyChart svg').datum(data).call(energyChart);
+             });
+             nv.utils.windowResize(energyChart.update);
+             return energyChart;
+         });
+
+        </script>
+    </body>
+</html>
