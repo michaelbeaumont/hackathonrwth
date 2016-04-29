@@ -3,122 +3,263 @@
     <head>
         <script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
         <script type="text/javascript" src="https://cdn.rawgit.com/novus/nvd3/v1.8.2/build/nv.d3.js"></script>
+        <script type="text/javascript" src="//code.jquery.com/jquery-2.2.3.min.js"></script>
+
         <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/novus/nvd3/v1.8.2/build/nv.d3.css"/>
        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     </head>
     <style>
      #tempChart svg {
-         height: 400px;
+         height: 200px;
+        width: 1200px;
      }
      #energyChart svg {
-         height: 400px;
+         height: 200px;
+        width: 1200px;
      }
+
+    .day {
+        fill: #fff;
+        stroke: #ccc;
+    }
+
+    .month {
+        fill: none;
+        stroke: #000;
+        stroke-width: 2px;
+    }
+
+    .greeting {
+        font-size: 1.5em;
+    }
+
+
+    .RdYlGn .q0-11{fill:rgb(165,0,38)}
+    .RdYlGn .q1-11{fill:rgb(215,48,39)}
+    .RdYlGn .q2-11{fill:rgb(244,109,67)}
+    .RdYlGn .q3-11{fill:rgb(253,174,97)}
+    .RdYlGn .q4-11{fill:rgb(254,224,139)}
+    .RdYlGn .q5-11{fill:rgb(255,255,191)}
+    .RdYlGn .q6-11{fill:rgb(217,239,139)}
+    .RdYlGn .q7-11{fill:rgb(166,217,106)}
+    .RdYlGn .q8-11{fill:rgb(102,189,99)}
+    .RdYlGn .q9-11{fill:rgb(26,152,80)}
+    .RdYlGn .q10-11{fill:rgb(0,104,55)}
 
     </style>
     <body>
-        <div id="tempChart">
-            <svg></svg>
-        </div>
-        <div id="energyChart">
-            <svg></svg>
-        </div>
+       <div class="container">
+        <h3 class="centered">Overview</h3>
+        <h5>Data set:</h5>
+           <select id="input" class="form-control input-lg">
+               <option value="1">Anlage1</option>
+               <option value="2">Anlage2</option>
+               <option value="3">Anlage3</option>
+               <option value="4">Anlage4</option>
+               <option value="5">Anlage5</option>
+       </select>
+            <div id="tempChart">
+                <svg></svg>
+            </div>
+            <div id="energyChart">
+                <svg></svg>
+            </div>
+            <br/>
+            <div id="calendar">
+            </div>
+       </div>
         <script type="text/javascript">
-         nv.addGraph(function() {
-             var tempChart = nv.models.multiBarChart().showControls(false);
+        $("#input").change(function() {
+           var dataset = $("#input").val();
+            nv.addGraph(function() {
+                var tempChart = nv.models.multiBarChart().showControls(false);
 
-             tempChart.xAxis
-                  .tickFormat(d3.time.format("%Y-%m-%d"));
-             tempChart.yAxis
-                  .tickFormat(d3.format(',.1f'));
+                tempChart.xAxis
+                    .tickFormat(d3.time.format("%Y-%m-%d"));
+                tempChart.yAxis
+                    .tickFormat(d3.format(',.1f'));
 
-             d3.csv("http://localhost:8000/Data_0.csv", function(rows) {
-                var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
-                var dateFormat = d3.time.format("%Y-%m-%d")
-                var outdoor_temp = d3.nest()
-                             .key(function(d) {
-                                var ts = dateTimeFormat.parse(d['timestamp']);
-                                return dateFormat(ts);
-                             })
-                             .rollup(function(d) {
-                                return d3.mean(d, function(g) {return g['outdoor_temperature_celsius']; });
-                             }).entries(rows);
-                var indoor_temp = d3.nest()
-                             .key(function(d) {
-                                var ts = dateTimeFormat.parse(d['timestamp']);
-                                return dateFormat(ts);
-                             })
-                             .rollup(function(d) {
-                                return d3.mean(d, function(g) {return g['indoor_target_temperature_celsius']; });
-                             }).entries(rows);
+                d3.csv("http://localhost:8000/Data_"+dataset+".csv", function(rows) {
+                    var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
+                    var dateFormat = d3.time.format("%Y-%m-%d")
+                    var outdoor_temp = d3.nest()
+                                .key(function(d) {
+                                    var ts = dateTimeFormat.parse(d['timestamp']);
+                                    return dateFormat(ts);
+                                })
+                                .rollup(function(d) {
+                                    return d3.mean(d, function(g) {return g['outdoor_temperature_celsius']; });
+                                }).entries(rows);
+                    var indoor_temp = d3.nest()
+                                .key(function(d) {
+                                    var ts = dateTimeFormat.parse(d['timestamp']);
+                                    return dateFormat(ts);
+                                })
+                                .rollup(function(d) {
+                                    return d3.mean(d, function(g) {return g['indoor_target_temperature_celsius']; });
+                                }).entries(rows);
 
-                 var data = [{
-                    key: "outdoor",
-                    values: outdoor_temp.map(function(d) {
-                         return {
-                             x: dateFormat.parse(d.key),
-                             y: d.values
-                         }
-                     })
-                  }, {
-                    key: "indoor",
-                      values: indoor_temp.map(function(d) {
-                          return {
-                              x: dateFormat.parse(d.key),
-                              y: d.values
-                          }
-                      })
-                 }];
+                    var data = [{
+                        key: "outdoor",
+                        values: outdoor_temp.map(function(d) {
+                            return {
+                                x: dateFormat.parse(d.key),
+                                y: d.values
+                            }
+                        })
+                    }, {
+                        key: "indoor",
+                        values: indoor_temp.map(function(d) {
+                            return {
+                                x: dateFormat.parse(d.key),
+                                y: d.values
+                            }
+                        })
+                    }];
 
-                d3.select('#tempChart svg').datum(data).transition().duration(500).call(tempChart);
-             });
-             nv.utils.windowResize(tempChart.update);
-             return tempChart;
-         });
+                    d3.select('#tempChart svg').datum(data).transition().duration(500).call(tempChart);
+                });
+                nv.utils.windowResize(tempChart.update);
+                return tempChart;
+            });
 
-         nv.addGraph(function() {
-             var energyChart = nv.models.lineWithFocusChart();
+            nv.addGraph(function() {
+                var energyChart = nv.models.lineWithFocusChart();
 
-             energyChart.xAxis
-                        .tickFormat(function(d) {
-                          return d3.time.format("%Y-%m-%d")(new Date(d));
-                        });
-             energyChart.x2Axis
-                        .tickFormat(function(d) {
-                          return d3.time.format("%Y-%m-%d")(new Date(d));
-                        });
-             energyChart.yAxis
-                  .tickFormat(d3.format(',.1f'));
+                energyChart.xAxis
+                            .tickFormat(function(d) {
+                            return d3.time.format("%Y-%m-%d")(new Date(d));
+                            });
+                energyChart.x2Axis
+                            .tickFormat(function(d) {
+                            return d3.time.format("%Y-%m-%d")(new Date(d));
+                            });
+                energyChart.yAxis
+                    .tickFormat(d3.format(',.1f'));
 
-             d3.csv("http://localhost:8000/Data_0.csv", function(rows) {
-                var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
-                var dateFormat = d3.time.format("%Y-%m-%d")
-                var energy_consumption = d3.nest()
-                             .key(function(d) {
-                                var ts = dateTimeFormat.parse(d['timestamp']);
-                                return dateFormat(ts);
-                             })
-                             .rollup(function(d) {
-                                return d3.sum(d, function(g) {return g['energy_consumption_kwh']; });
-                             }).entries(rows);
+                d3.csv("http://localhost:8000/Data_"+dataset+".csv", function(rows) {
+                    var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
+                    var dateFormat = d3.time.format("%Y-%m-%d")
+                    var energy_consumption = d3.nest()
+                                .key(function(d) {
+                                    var ts = dateTimeFormat.parse(d['timestamp']);
+                                    return dateFormat(ts);
+                                })
+                                .rollup(function(d) {
+                                    return d3.sum(d, function(g) {return g['energy_consumption_kwh']; });
+                                }).entries(rows);
 
-                 var data = [{
-                    key: "energy",
-                    values: energy_consumption.map(function(d) {
-                          return {
-                              x: dateFormat.parse(d.key),
-                              y: d.values
-                          }
-                      })
-                 }];
+                    var data = [{
+                        key: "energy",
+                        values: energy_consumption.map(function(d) {
+                            return {
+                                x: dateFormat.parse(d.key),
+                                y: d.values
+                            }
+                        })
+                    }];
 
-                 console.log(data);
+                    console.log(data);
 
-                d3.select('#energyChart svg').datum(data).call(energyChart);
-             });
-             nv.utils.windowResize(energyChart.update);
-             return energyChart;
-         });
+                    d3.select('#energyChart svg').datum(data).call(energyChart);
+                });
+                nv.utils.windowResize(energyChart.update);
+                return energyChart;
+            });
+     var width = 960,
+         height = 136,
+         cellSize = 17; // cell size
 
+     var percent = d3.format(".1%"),
+         format = d3.time.format("%Y-%m-%d");
+         reader = d3.time.format("%Y-%m-%d %H:%M:%S");
+
+     var color = d3.scale.quantize()
+                   .domain([0, 1])
+                   .range(d3.range(11).map(function(d) { return "q" + d + "-11"; }));
+     var ssv = d3.dsv(";", "text/plain");
+     ssv("Anlage"+dataset+".csv", function(row) {
+         //var date = new Date(row.timestamp);
+         return {
+             timestamp: reader.parse(row.timestamp),//date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate(),
+             outdoor_temperature_celsius: row.outdoor_temperature_celsius,
+             indoor_target_temperature_celsius: row.indoor_target_temperature_celsius,
+             energy_consumption_kwh: row.energy_consumption_kwh
+         }
+     }
+     ,function(error, csv) {
+         if (error) throw error;
+
+         var raw_csv = csv;
+         var total_verbrauch = d3.nest()
+                               .key(function(d) { return format(d.timestamp);})
+                               .rollup(function(d) {
+                                   return d3.sum(d, function(d) {return d.energy_consumption_kwh});})
+                               .map(csv);
+
+         console.log(total_verbrauch);
+         var max_verbrauch = d3.max(d3.values(total_verbrauch));
+
+     var to_percent = function(num) { return 1-num/max_verbrauch;};
+     var data = total_verbrauch;
+
+
+     var min_year = d3.min(raw_csv, function(d) {return d.timestamp.getFullYear()});
+     var max_year = d3.max(raw_csv, function(d) {return d.timestamp.getFullYear()});
+     $(".daily-use").remove();
+     var svg = d3.select("#calendar").selectAll("svg")
+                 .data(d3.range(min_year,max_year+1))
+                 .enter().append("svg")
+                 .attr("width", width)
+                 .attr("height", height)
+                 .attr("class", "RdYlGn daily-use")
+                 .append("g")
+                 .attr("transform", "translate(" + ((width - cellSize * 53) / 2) + "," + (height - cellSize * 7 - 1) + ")");
+
+     svg.append("text")
+        .attr("transform", "translate(-6," + cellSize * 3.5 + ")rotate(-90)")
+        .style("text-anchor", "middle")
+        .text(function(d) { return d; });
+
+     var rect = svg.selectAll(".day")
+                   .data(function(d) { return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1)); })
+                   .enter().append("rect")
+                   .attr("class", "day")
+                   .attr("width", cellSize)
+                   .attr("height", cellSize)
+                   .attr("x", function(d) { return d3.time.weekOfYear(d) * cellSize; })
+                   .attr("y", function(d) { return d.getDay() * cellSize; })
+                   .datum(format);
+
+     rect.append("title")
+         .text(function(d) { return d; });
+
+     svg.selectAll(".month")
+        .data(function(d) { return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1)); })
+        .enter().append("path")
+        .attr("class", "month")
+        .attr("d", monthPath);
+
+
+     rect.filter(function(d) {return d in data; })
+        .attr("class", function(d) { return "day " + color(to_percent(data[d])); })
+        .text(function(d) { return d + ": " + to_percent(percent(data[d])); })
+        .select("title")
+        .text(function(d) { return d + ": " + to_percent(percent(data[d])); });
+
+     function monthPath(t0) {
+         var t1 = new Date(t0.getFullYear(), t0.getMonth() + 1, 0),
+             d0 = t0.getDay(), w0 = d3.time.weekOfYear(t0),
+             d1 = t1.getDay(), w1 = d3.time.weekOfYear(t1);
+         return "M" + (w0 + 1) * cellSize + "," + d0 * cellSize
+              + "H" + w0 * cellSize + "V" + 7 * cellSize
+              + "H" + w1 * cellSize + "V" + (d1 + 1) * cellSize
+              + "H" + (w1 + 1) * cellSize + "V" + 0
+              + "H" + (w0 + 1) * cellSize + "Z";
+     }
+
+     });
+    });
         </script>
     </body>
 </html>
