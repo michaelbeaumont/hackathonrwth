@@ -70,6 +70,9 @@
        <br/>
             <div id="warnings">
             </div>
+            <div id="day-anzeige">
+                <h4></h4>
+            </div>
             <div id="tempChart">
                 <svg></svg>
             </div>
@@ -82,31 +85,30 @@
        </div>
         <script type="text/javascript">
          var showday = function(dataset, day) {
+            var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
+            var dateFormat = d3.time.format("%Y-%m-%d")
             $("#warnings").empty();
              if (dataset == 1 || dataset == 2) {
                  $("#warnings").append("<div class='alert alert-warning'>Der Verlauf des Energieverbrauches ist nicht ideal! Die Heizung wird sehr oft an und aus geschaltet.</div>");
                  }
+            $("#day-anzeige h4").html("Tag: " + d3.time.format("%d. %B %Y")(dateFormat.parse(day)));
             nv.addGraph(function() {
-                var tempChart = nv.models.multiBarChart().showControls(false);
+                var tempChart = nv.models.multiBarChart().showControls(false).duration(0);
 
                 tempChart.xAxis
-                    .tickFormat(d3.time.format("%Y-%m-%d"));
+                    .tickFormat(d3.time.format("%H:%m"));
                 tempChart.yAxis
                     .tickFormat(d3.format(',.1f'));
 
                 d3.csv("http://localhost:8000/Data_"+dataset+".csv", function(rows) {
-                    var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
-                    var dateFormat = d3.time.format("%Y-%m-%d")
                     var filteredData = rows.filter(function(d) {
                        var ts = dateTimeFormat.parse(d['timestamp']);
                         return dateFormat(ts) == day && ts.getSeconds() == 0 && ((ts.getMinutes() % 15) == 0);
                     });
 
-                   console.log(filteredData.length);
                     var data = [{
                         key: "outdoor",
                         values: filteredData.map(function(d) {
-                            //console.log(d);
                             return {
                                 x: dateTimeFormat.parse(d['timestamp']),
                                 y: d['outdoor_temperature_celsius']
@@ -129,18 +131,18 @@
             });
 
             nv.addGraph(function() {
-                var energyChart = nv.models.lineWithFocusChart();
+                var energyChart = nv.models.lineWithFocusChart().duration(0);
 
                 energyChart.xAxis
                             .tickFormat(function(d) {
-                            return d3.time.format("%Y-%m-%d")(new Date(d));
+                            return d3.time.format("%H:%M")(new Date(d));
                             });
                 energyChart.x2Axis
                             .tickFormat(function(d) {
-                            return d3.time.format("%Y-%m-%d")(new Date(d));
+                            return d3.time.format("%H:%M")(new Date(d));
                             });
                 energyChart.yAxis
-                    .tickFormat(d3.format(',.1f'));
+                    .tickFormat(d3.format(',.3f'));
 
                 d3.csv("http://localhost:8000/Data_"+dataset+".csv", function(rows) {
                     var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
@@ -170,13 +172,14 @@
             });
     };
         var show_all = function() {
+          $('#day-anzeige h4').html("")
            var dataset = $("#input").val();
             $("#warnings").empty();
              if (dataset == 1 || dataset == 2) {
                  $("#warnings").append("<div class='alert alert-warning'>Der Verlauf des Energieverbrauches ist nicht ideal! Die Heizung wird sehr oft an und aus geschaltet.</div>");
                  }
             nv.addGraph(function() {
-                var tempChart = nv.models.multiBarChart().showControls(false);
+                var tempChart = nv.models.multiBarChart().showControls(false).duration(0);
 
                 tempChart.xAxis
                     .tickFormat(d3.time.format("%Y-%m-%d"));
@@ -228,7 +231,7 @@
             });
 
             nv.addGraph(function() {
-                var energyChart = nv.models.lineWithFocusChart();
+                var energyChart = nv.models.lineWithFocusChart().duration(0);
 
                 energyChart.xAxis
                             .tickFormat(function(d) {
@@ -239,7 +242,7 @@
                             return d3.time.format("%Y-%m-%d")(new Date(d));
                             });
                 energyChart.yAxis
-                    .tickFormat(d3.format(',.1f'));
+                    .tickFormat(d3.format(',.3f'));
 
                 d3.csv("http://localhost:8000/Data_"+dataset+".csv", function(rows) {
                     var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
