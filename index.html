@@ -10,7 +10,7 @@
     </head>
     <style>
      #tempChart svg {
-        height: 200px;
+        height: 400px;
         //width: 1200px;
      }
      #energyChart svg {
@@ -83,8 +83,11 @@
                     var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
                     var dateFormat = d3.time.format("%Y-%m-%d")
                     var filteredData = rows.filter(function(d) {
-                        return dateFormat(dateTimeFormat.parse(d['timestamp'])) == day;
+                       var ts = dateTimeFormat.parse(d['timestamp']);
+                        return dateFormat(ts) == day && ts.getSeconds() == 0 && ((ts.getMinutes() % 15) == 0);
                     });
+
+                   console.log(filteredData.length);
                     var data = [{
                         key: "outdoor",
                         values: filteredData.map(function(d) {
@@ -128,7 +131,9 @@
                     var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
                     var dateFormat = d3.time.format("%Y-%m-%d")
                     var filteredData = rows.filter(function(d) {
-                        return dateFormat(dateTimeFormat.parse(d['timestamp'])) == day;
+                       var ts = dateTimeFormat.parse(d['timestamp']);
+                        return dateFormat(ts) == day && ts.getSeconds() == 0;
+
                     });
 
                     var data = [{
