@@ -10,12 +10,12 @@
     </head>
     <style>
      #tempChart svg {
-         height: 200px;
-        width: 1200px;
+        height: 200px;
+        //width: 1200px;
      }
      #energyChart svg {
-         height: 200px;
-        width: 1200px;
+        height: 200px;
+        //width: 1200px;
      }
 
     .day {
@@ -58,6 +58,7 @@
                <option value="4">Anlage4</option>
                <option value="5">Anlage5</option>
        </select>
+       <br/>
             <div id="tempChart">
                 <svg></svg>
             </div>
@@ -69,7 +70,86 @@
             </div>
        </div>
         <script type="text/javascript">
-        $("#input").change(function() {
+         var showday = function(dataset, day) {
+            nv.addGraph(function() {
+                var tempChart = nv.models.multiBarChart().showControls(false);
+
+                tempChart.xAxis
+                    .tickFormat(d3.time.format("%Y-%m-%d"));
+                tempChart.yAxis
+                    .tickFormat(d3.format(',.1f'));
+
+                d3.csv("http://localhost:8000/Data_"+dataset+".csv", function(rows) {
+                    var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
+                    var dateFormat = d3.time.format("%Y-%m-%d")
+                    var filteredData = rows.filter(function(d) {
+                        return dateFormat(dateTimeFormat.parse(d['timestamp'])) == day;
+                    });
+                    var data = [{
+                        key: "outdoor",
+                        values: filteredData.map(function(d) {
+                            //console.log(d);
+                            return {
+                                x: dateTimeFormat.parse(d['timestamp']),
+                                y: d['outdoor_temperature_celsius']
+                            }
+                        })
+                    }, {
+                        key: "indoor",
+                        values: filteredData.map(function(d) {
+                            return {
+                                x: dateTimeFormat.parse(d['timestamp']),
+                                y: d['indoor_target_temperature_celsius']
+                            }
+                        })
+                    }];
+
+                    d3.select('#tempChart svg').datum(data).transition().duration(500).call(tempChart);
+                });
+                nv.utils.windowResize(tempChart.update);
+                return tempChart;
+            });
+
+            nv.addGraph(function() {
+                var energyChart = nv.models.lineWithFocusChart();
+
+                energyChart.xAxis
+                            .tickFormat(function(d) {
+                            return d3.time.format("%Y-%m-%d")(new Date(d));
+                            });
+                energyChart.x2Axis
+                            .tickFormat(function(d) {
+                            return d3.time.format("%Y-%m-%d")(new Date(d));
+                            });
+                energyChart.yAxis
+                    .tickFormat(d3.format(',.1f'));
+
+                d3.csv("http://localhost:8000/Data_"+dataset+".csv", function(rows) {
+                    var dateTimeFormat = d3.time.format("%Y-%m-%d %H:%M:%S");
+                    var dateFormat = d3.time.format("%Y-%m-%d")
+                    var filteredData = rows.filter(function(d) {
+                        return dateFormat(dateTimeFormat.parse(d['timestamp'])) == day;
+                    });
+
+                    var data = [{
+                        key: "energy",
+                        values: filteredData.map(function(d) {
+                            return {
+                                x: dateTimeFormat.parse(d['timestamp']),
+                                y: d['energy_consumption_kwh']
+                            }
+                        })
+                    }];
+
+                    //console.log(data);
+
+                    d3.select('#energyChart svg').datum(data).call(energyChart);
+                });
+                nv.utils.windowResize(energyChart.update);
+                return energyChart;
+            });
+    };
+        var show_all = function() {
            var dataset = $("#input").val();
             nv.addGraph(function() {
                 var tempChart = nv.models.multiBarChart().showControls(false);
@@ -159,7 +239,7 @@
                         })
                     }];
 
-                    console.log(data);
+                    //console.log(data);
 
                     d3.select('#energyChart svg').datum(data).call(energyChart);
                 });
@@ -197,7 +277,7 @@
                                    return d3.sum(d, function(d) {return d.energy_consumption_kwh});})
                                .map(csv);
 
-         console.log(total_verbrauch);
+         //console.log(total_verbrauch);
          var max_verbrauch = d3.max(d3.values(total_verbrauch));
 
      var to_percent = function(num) { return 1-num/max_verbrauch;};
@@ -210,7 +290,7 @@
      var svg = d3.select("#calendar").selectAll("svg")
                  .data(d3.range(min_year,max_year+1))
                  .enter().append("svg")
-                 .attr("width", width)
+                 .attr("width", "100vw")
                  .attr("height", height)
                  .attr("class", "RdYlGn daily-use")
                  .append("g")
@@ -227,6 +307,7 @@
                    .attr("class", "day")
                    .attr("width", cellSize)
                    .attr("height", cellSize)
+                   .attr("onclick",function(d) {return "showday("+dataset+",'"+format(d)+"')"})
                    .attr("x", function(d) { return d3.time.weekOfYear(d) * cellSize; })
                    .attr("y", function(d) { return d.getDay() * cellSize; })
                    .datum(format);
@@ -259,7 +340,9 @@
      }
 
      });
-    });
+    };
+        $(document).ready(show_all);
+        $("#input").change(show_all);
         </script>
     </body>
 </html>
